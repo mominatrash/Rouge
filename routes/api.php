@@ -32,6 +32,8 @@ Route::post('category_by_id', [ProductController::class, 'category_by_id']);
 Route::post('add_whitelist', [ProductController::class, 'add_whitelist']);
 Route::post('myWhiteList', [ProductController::class, 'myWhiteList']);
 Route::post('get_product_by_id', [ProductController::class, 'get_product_by_id']);
+Route::post('search_in_category', [ProductController::class, 'search_in_category']);
+Route::post('search', [ProductController::class, 'search']);
 
 Route::post('new_address', [UserController::class, 'new_address']);
 Route::post('change_address', [UserController::class, 'change_address']);

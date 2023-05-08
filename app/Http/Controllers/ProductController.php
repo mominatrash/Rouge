@@ -114,11 +114,11 @@ class ProductController extends Controller
     {
         $product = Product::with('category:id,category_name')->find($request->id);
         if ($product) {
-        $colors = Color::where('product_id', $request->id)->get('color_name');
-        $simillar = Product::where('category_id', $product->category_id)->where('id', '!=', $request->id)->get(['product_name', 'image', 'price']);
-        $images = Image::where('product_id', $product->id)->get('image');
+            $colors = Color::where('product_id', $request->id)->get('color_name');
+            $simillar = Product::where('category_id', $product->category_id)->where('id', '!=', $request->id)->get(['product_name', 'image', 'price']);
+            $images = Image::where('product_id', $product->id)->get('image');
 
-        
+
             $product['category_name'] = $product->category->category_name;
             unset($product->category);
 
@@ -201,4 +201,42 @@ class ProductController extends Controller
             ]);
         }
     }
+
+    public function search_in_category(Request $request)
+    {
+        $search = Product::where('category_id',$request->category_id)->where('product_name', 'like', '%' . $request->product_name . '%')->get();
+        
+        if ($search->count() > 0) {
+            return response()->json([
+                'message' => 'Data fetched successfully',
+                'code' => 200,
+                'data' => $search
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'No data found',
+                'code' => 404
+            ]);
+        }
+    }
+
+
+    public function search(Request $request)
+    {
+        $search = Product::where('product_name', 'like', '%' . $request->product_name . '%')->get();
+        
+        if ($search->count() > 0) {
+            return response()->json([
+                'message' => 'Data fetched successfully',
+                'code' => 200,
+                'data' => $search
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'No data found',
+                'code' => 404
+            ]);
+        }
+    }
+    
 }
