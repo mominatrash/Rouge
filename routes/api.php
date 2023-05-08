@@ -23,3 +23,5 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::post('register', [UserController::class, 'register']);
 Route::post('login', [Usercontroller::class, 'login']);
 Route::post('logout', [Usercontroller::class, 'logout']);
+Route::post('forgot_password', [Usercontroller::class, 'forgot_password']);
+Route::post('change_forgotten_password', [Usercontroller::class, 'change_forgotten_password']);
