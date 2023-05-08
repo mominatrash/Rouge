@@ -150,84 +150,27 @@ class UserController extends Controller
 
         $user = User::where('phone', $request->phone)->first();
 
-        if($user){
+        if ($user) {
 
-        $randomCode = Str::random(6);
-
-
-        $user->code = $randomCode;
-        $user->save();
-
-        return response()->json([
-            'code' => 200,
-            'status' => true,
-            'message' => 'a change password request code has been sent to your email',
-            'data' => $randomCode
-        ]);
-    }else{
-
-        return response()->json(
-            [
-                "errors" => [
-                    "phone" => [
-                        "No Account Assigned To This phone!"
-                    ]
-                ],
-                "status" => false,
-                'code' => 404,
-            ]
-        );
+            $randomCode = Str::random(6);
 
 
-    }
-    }
-
-    public function change_forgotten_password(Request $request)
-    {
-        $user = User::where('phone', $request->phone)->first();
-        if($user){
-
-        if ($user->code == $request->code) {
-            $password1 = bcrypt($request->new_password1);
-            $password2 = bcrypt($request->new_password2);
-            if($password1 == $password2){
-            $user->password = bcrypt($request->new_password);
-
-           
-            $user->code = null;
+            $user->code = $randomCode;
             $user->save();
-            }else{
-
-                
-            return response()->json(
-                [
-                    "errors" => [
-                        "phone" => [
-                            "Passwords dont match!!"
-                        ]
-                    ],
-                    "status" => false,
-                    'code' => 404,
-                ]
-            );
-            }
-
-           
-          
 
             return response()->json([
                 'code' => 200,
                 'status' => true,
-                'message' => 'Password updated successfully',
-
+                'message' => 'a change password request code has been sent to your email',
+                'data' => $randomCode
             ]);
-        }else{
+        } else {
 
             return response()->json(
                 [
                     "errors" => [
                         "phone" => [
-                            "Code is invalid!"
+                            "No Account Assigned To This phone!"
                         ]
                     ],
                     "status" => false,
@@ -235,20 +178,180 @@ class UserController extends Controller
                 ]
             );
         }
-    }else{
-
-        return response()->json(
-            [
-                "errors" => [
-                    "phone" => [
-                        "No Account Assigned To This phone!"
-                    ]
-                ],
-                "status" => false,
-                'code' => 404,
-            ]
-        );
     }
-   
-}
+
+    public function change_forgotten_password(Request $request)
+    {
+        $user = User::where('phone', $request->phone)->first();
+        if ($user) {
+
+            if ($user->code == $request->code) {
+                $password1 = bcrypt($request->new_password1);
+                $password2 = bcrypt($request->new_password2);
+                if ($password1 == $password2) {
+                    $user->password = bcrypt($request->new_password);
+
+
+                    $user->code = null;
+                    $user->save();
+                } else {
+
+
+                    return response()->json(
+                        [
+                            "errors" => [
+                                "phone" => [
+                                    "Passwords dont match!!"
+                                ]
+                            ],
+                            "status" => false,
+                            'code' => 404,
+                        ]
+                    );
+                }
+
+
+
+
+                return response()->json([
+                    'code' => 200,
+                    'status' => true,
+                    'message' => 'Password updated successfully',
+
+                ]);
+            } else {
+
+                return response()->json(
+                    [
+                        "errors" => [
+                            "phone" => [
+                                "Code is invalid!"
+                            ]
+                        ],
+                        "status" => false,
+                        'code' => 404,
+                    ]
+                );
+            }
+        } else {
+
+            return response()->json(
+                [
+                    "errors" => [
+                        "phone" => [
+                            "No Account Assigned To This phone!"
+                        ]
+                    ],
+                    "status" => false,
+                    'code' => 404,
+                ]
+            );
+        }
+    }
+
+    public function addresses()
+    {
+        $addresses = Address::where('user_id', Auth::guard('api')->user()->id)->get();
+
+        return response()->json([
+            'message' => 'data fetched successfully',
+            'code' => 200,
+            'address' => $addresses,
+        ]);
+    }
+
+    public function new_address(Request $request)
+    {
+        $address = new Address();
+        $address->user_id = Auth::guard('api')->user()->id;
+        $address->name = $request->nickname;
+        $address->governorate = $request->governorate;
+        $address->address = $request->address;
+        $address->nearby_place = $request->nearby_place;
+        $address->save();
+
+
+        return response()->json([
+            'message' => 'data fetched successfully',
+            'code' => 200,
+            'address' => $address,
+        ]);
+    }
+
+    public function update_address(Request $request)
+    {
+        $update_address = Address::where('id', $request->id)->first();
+
+        $update_address->name = $request->nickname;
+        $update_address->governorate = $request->governorate;
+        $update_address->address = $request->address;
+        $update_address->nearby_place = $request->nearby_place;
+        $update_address->save();
+
+        return response()->json([
+            'message' => 'address updated successfully',
+            'code' => 200,
+            'address' => $update_address,
+        ]);
+    }
+
+    public function change_address(Request $request)
+    {
+        $oldAddress = Address::where('selected', 1)->where('id', '!=', $request->id)->first();
+        if ($oldAddress) {
+            $oldAddress->selected = 0;
+            $oldAddress->save();
+
+            $address = Address::where('id', $request->id)->first();
+            $address->selected = 1;
+            $address->save();
+
+
+            return response()->json([
+                'message' => 'address changed successfully',
+                'code' => 200,
+                'address' => $address,
+            ]);
+        } else {
+            $address = Address::where('id', $request->id)->first();
+            return response()->json([
+                'message' => 'address already selected',
+                'code' => 200,
+                'address' => $address,
+            ]);
+        }
+    }
+
+    public function delete_address(Request $request)
+    {
+        $address = Address::where('id',$request->id)->first();
+
+        if ($address->selected == 1) {
+            $nextAddress = Address::where('id', '!=', $request->id)->first();
+
+            if ($nextAddress) {
+                $nextAddress->selected = 1;
+                $nextAddress->save();
+                $address->delete();
+
+                return response()->json([
+                    'message' => 'Address deleted successfully',
+                    'code' => 200,
+                ]);
+            }else{
+                return response()->json([
+                    'message' => 'Cant delete your last address',
+                    'code' => 200,
+                ]);
+            }
+        } else {
+
+            $address->delete();
+
+            return response()->json([
+                'message' => 'Address deleted successfully',
+                'code' => 200,
+            ]);
+        }
+    }
 }
