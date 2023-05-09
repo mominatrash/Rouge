@@ -12,9 +12,13 @@ class Product extends Model
     protected $table = 'products';
     protected $guarded = [];
 
-    public function category(){
+    public function category()
+    {
         return $this->belongsTo('App\Models\Category');
     }
 
-
+    public function colors()
+    {
+        return $this->hasMany(Color::class, 'product_id');
+    }
 }
