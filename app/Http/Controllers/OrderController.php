@@ -6,14 +6,82 @@ use App\Models\Cart;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Address;
-use App\Models\OrderReview;
 use App\Models\Product;
+use App\Models\OrderReview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 
 class OrderController extends Controller
 {
+
+    public function send_notification($fcm_token, $title, $body, $order_id)
+    {
+        $from = "AAAAm1meYS0:APA91bGCYPtLMEdVt2KLetGH7mAp9zwzEOEkcZzAwQoVqpRJU8eJecCopajsuPmPnI4vMvAVCJybx-R9CKx8fbtexzbJeoP5JGVehvo8TEp12kOp1XrlDtl;kjafsd;lkafjalskdf";
+        $to = $fcm_token;
+
+        $msg = array(
+            'title' => $title,
+            'body' => $body,
+
+        );
+
+        $fields = array(
+            'to' => $fcm_token,
+            'notification' => $msg,
+            'data' => [
+                'bookingId' => $order_id,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK",
+                "screen" =>  "POST_SCREEN",
+
+            ]
+        );
+
+
+        $headers = array(
+            'Authorization: key=' . $from,
+            'Content-Type: application/json'
+        );
+        //#Send Reponse To FireBase Server
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/fcm/send');
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
+        $result = curl_exec($ch);
+        curl_close($ch);
+
+        return $result;
+    }
+
+
+
+    public function send_notification_to_person(Request $request)
+    {
+
+        $usernotification = Notification::create([
+            'user_id' => $request->sendnotifi,
+            'title' => $request->title,
+            'body' =>  $request->body,
+        ]);
+
+        $user = User::findOrFail($request->user_id);
+
+        $order_id = 5;
+
+        $this->send_notification($user->fcm_token, $request->title, $request->body, 60);
+
+
+
+        return response()->json([
+            'message3'            => 'تم ارسال اشعار',
+        ]);
+    }
+
+
     public function checkout(Request $request)
     {
         $check = [];
@@ -100,6 +168,18 @@ class OrderController extends Controller
                 }
 
                 DB::commit();
+
+                $user = Auth::guard('api')->user();
+                if ($user->fcm_token) {
+                    $notificationData = [
+                        'fcm_token' => $user->fcm_token,
+                        'title' => 'Order Notification',
+                        'body' => 'Your order placed successfully',
+                        'order_id' => 0,
+                    ];
+
+                    $this->send_notification($notificationData);
+                }
 
                 return response()->json([
                     'message' => 'Order placed successfully',
@@ -219,10 +299,10 @@ class OrderController extends Controller
                     $cartItem->save();
                 }
             }
-            
+
             // Retrieve the updated cart items
             $my_cart = Cart::where('order_id', $request->id)->get();
-            
+
             // Build the response data
             foreach ($my_cart as $cart) {
                 $d[] = [
@@ -232,7 +312,7 @@ class OrderController extends Controller
                     'product_review' => $cart->product_review,
                 ];
             }
-            
+
             return response()->json([
                 'message' => 'Review submitted successfully',
                 'code' => 200,
