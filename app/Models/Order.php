@@ -5,15 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Color extends Model
+class Order extends Model
 {
     use HasFactory;
-    protected $table = 'colors';
+    protected $table = 'orders';
     protected $guarded = [];
 
 
-    public function products()
+    public function cart()
     {
-        return $this->belongsToMany(Product::class, 'products_colors', 'color_id', 'product_id');
+        return $this->hasMany(Cart::class, 'order_id');
     }
 }

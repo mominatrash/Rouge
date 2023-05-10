@@ -1,9 +1,11 @@
 <?php
 
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProductController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,3 +43,18 @@ Route::post('change_address', [UserController::class, 'change_address']);
 Route::get('addresses', [UserController::class, 'addresses']);
 Route::post('delete_address', [UserController::class, 'delete_address']);
 Route::post('update_address', [UserController::class, 'update_address']);
+
+
+
+
+
+Route::post('addToCart', [CartController::class, 'addToCart']);
+Route::get('my_cart', [CartController::class, 'my_cart']);
+
+
+
+Route::get('checkout', [OrderController::class, 'checkout']);
+Route::get('place_order', [OrderController::class, 'place_order']);
+Route::get('OnProgressOrders', [OrderController::class, 'OnProgressOrders']);
+Route::get('CompletedOrders', [OrderController::class, 'CompletedOrders']);
+Route::get('Order_by_id', [OrderController::class, 'Order_by_id']);

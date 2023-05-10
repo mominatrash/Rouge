@@ -114,7 +114,11 @@ class ProductController extends Controller
     {
         $product = Product::with('category:id,category_name')->find($request->id);
         if ($product) {
-            $colors = Color::where('product_id', $request->id)->get('color_name');
+            
+            $colors = $product->colors()->pluck('color_name', 'color_id')->map(function ($colorName, $colorId) {
+                return ['color_id' => $colorId , 'color_name' => $colorName];
+            })->values();
+            
             $simillar = Product::where('category_id', $product->category_id)->where('id', '!=', $request->id)->get(['product_name', 'image', 'price']);
             $images = Image::where('product_id', $product->id)->get('image');
 
