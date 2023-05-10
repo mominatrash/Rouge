@@ -4,14 +4,86 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Address;
+use App\Models\Welcome;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Notification;
 
 class UserController extends Controller
 {
+
+    public function send_notification($fcm_token, $title, $body, $order_id)
+    {
+        $from = "AAAAm1meYS0:APA91bGCYPtLMEdVt2KLetGH7mAp9zwzEOEkcZzAwQoVqpRJU8eJecCopajsuPmPnI4vMvAVCJybx-R9CKx8fbtexzbJeoP5JGVehvo8TEp12kOp1XrlDtl;kjafsd;lkafjalskdf";
+        $to = $fcm_token;
+
+        $msg = array(
+            'title' => $title,
+            'body' => $body,
+
+        );
+
+        $fields = array(
+            'to' => $fcm_token,
+            'notification' => $msg,
+            'data' => [
+                'bookingId' => $order_id,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK",
+                "screen" =>  "POST_SCREEN",
+
+            ]
+        );
+
+
+        $headers = array(
+            'Authorization: key=' . $from,
+            'Content-Type: application/json'
+        );
+        //#Send Reponse To FireBase Server
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/fcm/send');
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
+        $result = curl_exec($ch);
+        curl_close($ch);
+
+        return $result;
+    }
+
+
+
+    public function send_notification_to_person(Request $request)
+    {
+
+        $usernotification = Notification::create([
+            'user_id' => $request->sendnotifi,
+            'title' => $request->title,
+            'body' =>  $request->body,
+        ]);
+
+        $user = User::findOrFail($request->user_id);
+
+        $order_id = 5;
+
+        $this->send_notification($user->fcm_token, $request->title, $request->body, 60);
+
+
+
+        return response()->json([
+            'message3'            => 'تم ارسال اشعار',
+        ]);
+    }
+
+
+
+
+
     public function register(Request $request)
     {
 
@@ -324,7 +396,7 @@ class UserController extends Controller
 
     public function delete_address(Request $request)
     {
-        $address = Address::where('id',$request->id)->first();
+        $address = Address::where('id', $request->id)->first();
 
         if ($address->selected == 1) {
             $nextAddress = Address::where('id', '!=', $request->id)->first();
@@ -338,7 +410,7 @@ class UserController extends Controller
                     'message' => 'Address deleted successfully',
                     'code' => 200,
                 ]);
-            }else{
+            } else {
                 return response()->json([
                     'message' => 'Cant delete your last address',
                     'code' => 200,

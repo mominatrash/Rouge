@@ -6,6 +6,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\WelcomeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,14 +48,23 @@ Route::post('update_address', [UserController::class, 'update_address']);
 
 
 
+Route::get('welcome', [WelcomeController::class, 'welcome']);
+Route::get('banner', [WelcomeController::class, 'banner']);
+Route::get('privacy', [WelcomeController::class, 'privacy']);
+Route::get('about_us', [WelcomeController::class, 'about_us']);
+
+
+
+
 
 Route::post('addToCart', [CartController::class, 'addToCart']);
 Route::get('my_cart', [CartController::class, 'my_cart']);
 
 
 
-Route::get('checkout', [OrderController::class, 'checkout']);
+Route::post('checkout', [OrderController::class, 'checkout']);
 Route::get('place_order', [OrderController::class, 'place_order']);
 Route::get('OnProgressOrders', [OrderController::class, 'OnProgressOrders']);
 Route::get('CompletedOrders', [OrderController::class, 'CompletedOrders']);
-Route::get('Order_by_id', [OrderController::class, 'Order_by_id']);
+Route::post('Order_by_id', [OrderController::class, 'Order_by_id']);
+Route::post('order_review', [OrderController::class, 'order_review']);

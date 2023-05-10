@@ -6,6 +6,7 @@ use App\Models\Cart;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Address;
+use App\Models\OrderReview;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,7 @@ class OrderController extends Controller
     public function checkout(Request $request)
     {
         $check = [];
-        $my_cart = Cart::where('user_id', Auth::guard('api')->user()->id)->where('status',0)->get();
+        $my_cart = Cart::where('user_id', Auth::guard('api')->user()->id)->where('status', 0)->get();
         if ($my_cart->count() > 0) {
 
 
@@ -169,7 +170,7 @@ class OrderController extends Controller
 
     public function Order_by_id(Request $request)
     {
-        $order = Order::where('id',$request->id)->with('cart.product', 'cart.color')->get();
+        $order = Order::where('id', $request->id)->with('cart.product', 'cart.color')->get();
 
         if ($order->count() > 0) {
 
@@ -187,4 +188,76 @@ class OrderController extends Controller
             ]);
         }
     }
+
+
+    public function order_review(Request $request)
+    {
+        $order = Order::where('id', $request->id)->with('cart')->first();
+
+
+        $order->delivery_service = $request->delivery_service;
+        $order->feedback = $request->feedback;
+        $order->save();
+
+        $my_cart = Cart::where('order_id', $request->id)->get();
+
+        if ($my_cart->count() > 0) {
+            $d = [];
+
+            $productReviews = json_decode($request->product_reviews, true);
+
+            foreach ($productReviews as $item) {
+                $cartId = $item['cart_id'];
+                $productReview = $item['product_review'];
+
+
+                $cartItem = $my_cart->where('id', $cartId)->first();
+
+                if ($cartItem) {
+
+                    $cartItem->product_review = $productReview;
+                    $cartItem->save();
+                }
+            }
+            
+            // Retrieve the updated cart items
+            $my_cart = Cart::where('order_id', $request->id)->get();
+            
+            // Build the response data
+            foreach ($my_cart as $cart) {
+                $d[] = [
+                    'order_id' => $cart->order_id,
+                    'product_id' => $cart->product_id,
+                    'delivery_fee' => $cart->delivery_fee,
+                    'product_review' => $cart->product_review,
+                ];
+            }
+            
+            return response()->json([
+                'message' => 'Review submitted successfully',
+                'code' => 200,
+                'status' => true,
+                'orders' => $d
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Failed to submit review!',
+                'code' => 500,
+                'status' => false,
+            ]);
+        }
+    }
 }
+
+// foreach ($my_cart as $index => $cart) {
+//     if (isset($request->product_reviews[$index])) {
+//         $cart->product_review = $request->product_reviews[$index];
+//         $cart->save();
+//         $d[] = [
+//             'order_id' => $cart->order_id,
+//             'product_id' => $cart->product_id,
+//             'delivery_fee' => $cart->delivery_fee,
+//             'product_review' => $cart->product_review,
+//         ];
+//     }
+// }
