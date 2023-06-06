@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Address;
 use App\Models\Cart;
 use App\Models\User;
+use App\Models\Address;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use App\Models\GiftPackaging;
 use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
@@ -52,8 +53,9 @@ class CartController extends Controller
     }
 
 
-    public function my_cart()
+    public function my_cart(Request $request)
     {
+        $data = [];
 
         Cart::where('user_id', Auth::guard('api')->user()->id)->where('quantity', '<=', 0)->delete();
 
@@ -64,10 +66,26 @@ class CartController extends Controller
             $subtotals = $my_cart->sum(function ($cart) {
                 return $cart->product->price * $cart->quantity;
             });
+            if ($request->has('gift_packaging')){
+
+                $gift = GiftPackaging::first();
+                
+
+            $total = $my_cart->sum('total') + $gift->price;
+            $check['Gift Packiging'] = $gift->price;
+        }else{
 
             $total = $my_cart->sum('total');
+        }
+
+           
             $delivery_fee = $my_cart->sum('delivery_fee');
 
+            $data['cart'] = $my_cart;
+            $data['SubTotal'] = $subtotals;
+            $data['Delivery Fee'] = $delivery_fee;
+            $data['Total'] = $total;
+            
 
 
 
@@ -75,11 +93,7 @@ class CartController extends Controller
                 'message' => 'Data fetched successfully',
                 'code' => 200,
                 'status' => true,
-                'data' => $my_cart,
-                'SubTotal' => $subtotals,
-                'Delevry Fee' => $delivery_fee,
-                'Total' => $total,
-
+                'Order' => $data,
             ]);
         } else {
 

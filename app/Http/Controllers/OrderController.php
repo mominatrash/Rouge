@@ -6,6 +6,7 @@ use App\Models\Cart;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Address;
+use App\Models\GiftPackaging;
 use App\Models\Product;
 use App\Models\OrderReview;
 use Illuminate\Http\Request;
@@ -98,7 +99,17 @@ class OrderController extends Controller
                     return $cart->product->price * $cart->quantity;
                 });
 
+                if ($request->has('gift_packaging')){
+
+                    $gift = GiftPackaging::first();
+                    
+
+                $total = $my_cart->sum('total') + $gift->price;
+                $check['Gift Packiging'] = $gift->price;
+            }else{
+
                 $total = $my_cart->sum('total');
+            }
                 $delivery_fee = $my_cart->sum('delivery_fee');
 
                 $check['Receiver'] = $user->name;
@@ -128,12 +139,24 @@ class OrderController extends Controller
     public function place_order(Request $request)
     {
         try {
+            
             DB::beginTransaction();
 
             $address = Address::where('user_id', Auth::guard('api')->user()->id)->where('selected', 1)->first();
             $my_cart = Cart::where('user_id', Auth::guard('api')->user()->id)->where('status', 0)->get();
             if ($my_cart->count() > 0) {
+
+                if ($request->has('gift_packaging')){
+
+                    $gift = GiftPackaging::first();
+                    
+
+                $total = $my_cart->sum('total') + $gift->price;
+               
+            }else{
+
                 $total = $my_cart->sum('total');
+            }
 
                 $order = new Order();
                 $order->reciever = Auth::guard('api')->user()->name;

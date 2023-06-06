@@ -252,43 +252,17 @@ class UserController extends Controller
         }
     }
 
-    public function change_forgotten_password(Request $request)
+    public function verify_pass_code(Request $request)
     {
         $user = User::where('phone', $request->phone)->first();
         if ($user) {
-
             if ($user->code == $request->code) {
-                $password1 = bcrypt($request->new_password1);
-                $password2 = bcrypt($request->new_password2);
-                if ($password1 == $password2) {
-                    $user->password = bcrypt($request->new_password);
-
-
-                    $user->code = null;
-                    $user->save();
-                } else {
-
-
-                    return response()->json(
-                        [
-                            "errors" => [
-                                "phone" => [
-                                    "Passwords dont match!!"
-                                ]
-                            ],
-                            "status" => false,
-                            'code' => 404,
-                        ]
-                    );
-                }
-
 
 
 
                 return response()->json([
                     'code' => 200,
                     'status' => true,
-                    'message' => 'Password updated successfully',
 
                 ]);
             } else {
@@ -306,7 +280,6 @@ class UserController extends Controller
                 );
             }
         } else {
-
             return response()->json(
                 [
                     "errors" => [
@@ -320,6 +293,43 @@ class UserController extends Controller
             );
         }
     }
+
+
+    public function change_forgotten_password(Request $request)
+    {
+        $user = User::where('phone', $request->phone)->first();
+        if ($user) {
+            if ($user->code == $request->code) {
+
+                $user->code = null;
+                $user->password = bcrypt($request->new_password);
+                $user->save();
+
+
+                return response()->json([
+                    'code' => 200,
+                    'status' => true,
+                    'message' => 'Password updated successfully',
+
+                ]);
+            } else {
+
+                return response()->json(
+                    [
+                        "errors" => [
+                            "phone" => [
+                                "No Account Assigned To This phone!"
+                            ]
+                        ],
+                        "status" => false,
+                        'code' => 404,
+                    ]
+                );
+            }
+        }
+    }
+
+
 
     public function addresses()
     {
@@ -369,7 +379,7 @@ class UserController extends Controller
 
     public function change_address(Request $request)
     {
-        $oldAddress = Address::where('selected', 1)->where('id', '!=', $request->id)->first();
+        $oldAddress = Address::where('id', Auth::guard('api')->user()->id)->where('selected', 1)->where('id', '!=', $request->id)->first();
         if ($oldAddress) {
             $oldAddress->selected = 0;
             $oldAddress->save();

@@ -12,6 +12,19 @@ use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
+
+    public function latest_products()
+    {
+        $latest = Product::OrderBy('id','desc')->paginate(5);
+       
+
+        return response()->json([
+            'message' => 'data fetched successfully',
+            'code' => 200,
+            'data' => $latest,
+        ]);
+
+    }
     public function categories()
     {
         $categories = Category::get(['image', 'category_name']);
@@ -259,9 +272,11 @@ class ProductController extends Controller
             $query->where('price', '<=', $request->price);
         }
 
-        if ($request->filled('color_name')) {
+        if ($request->filled('color_id')) {
             $query->whereHas('colors', function ($colorQuery) use ($request) {
-                $colorQuery->where('color_name', $request->color_name);
+                $colorQuery->where('id', $request->color_id);
+
+
             });
         }
 
